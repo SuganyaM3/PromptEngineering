@@ -153,7 +153,7 @@ elif page == "Multimodal":
                 out = model.generate(**inputs, max_new_tokens=40)
                 caption = processor.decode(out[0], skip_special_tokens=True)
                 st.write("Caption:", caption)
-                prompt = f"Image caption: {caption}. Act as a quality analyst and provide issue, impact, and next inspection step."
+                prompt = f"Image caption: {caption}. Act as a medical imaging assistant for educational use. Describe visible patterns and recommend clinical review."
                 st.write(generate(prompt, model_name, cfg))
             except Exception as exc:
                 st.error(f"Multimodal model unavailable: {exc}")
