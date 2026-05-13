@@ -1,6 +1,7 @@
 import sqlite3
 from dataclasses import dataclass
 from typing import Dict, List
+import os
 
 import pandas as pd
 import plotly.express as px
@@ -16,6 +17,10 @@ from langchain_community.vectorstores import FAISS
 st.set_page_config(page_title="Enterprise Prompt Engineering Studio", page_icon="AI", layout="wide")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+hf_token = st.secrets.get("HF_TOKEN", os.getenv("HF_TOKEN", ""))
+if hf_token:
+        os.environ["HF_TOKEN"] = hf_token
+        os.environ["HUGGINGFACEHUB_API_TOKEN"] = hf_token
 
 @dataclass
 class GenConfig:
@@ -28,6 +33,8 @@ class GenConfig:
 
 @st.cache_resource(show_spinner=False)
 def load_llm(model_name: str):
+    hf_token = os.getenv("HF_TOKEN") or None
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(DEVICE)
     return tokenizer, model
@@ -144,8 +151,13 @@ elif page == "Multimodal":
         st.image(image, use_container_width=True)
         if st.button("Analyze image", type="primary"):
             try:
-                processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-                model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(DEVICE)
+                processor = BlipProcessor.from_pretrained(
+                        "Salesforce/blip-image-captioning-base",
+                         token = os.getenv("HF_TOKEN") or None
+)
+                model = BlipForConditionalGeneration.from_pretrained(
+                    "Salesforce/blip-image-captioning-base",
+                    token=os.getenv("HF_TOKEN") or None,).to(DEVICE)
                 inputs = processor(image, return_tensors="pt").to(DEVICE)
                 out = model.generate(**inputs, max_new_tokens=40)
                 caption = processor.decode(out[0], skip_special_tokens=True)
